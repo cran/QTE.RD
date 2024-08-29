@@ -5,7 +5,7 @@
 \title{Bandwidth estimation}
 \usage{
 rdq.bandwidth(y, x, d, x0, z0=NULL, cov, cv, val,hp=NULL,pm.each=1,
-     bdy=1,p.order=1,xl=0.5,print.qte=1)
+     bdy=1,p.order=1,xl=0.5)
 }
 \arguments{
 \item{y}{a numeric vector, the outcome variable.}
@@ -38,8 +38,6 @@ as the pilot bandwidth to compute the MSE optimal bandwidth.}
 when \emph{p.order=2}, a local quadratic regression is used.}
 
 \item{xl}{if \emph{xl=0.5}, the CV bandwidth use the 50\% of observations closest to \eqn{x_0}.}
-
-\item{print.qte}{a logical flag specifying whether to print an outcome table.}
 }
 \value{
 A list with elements:

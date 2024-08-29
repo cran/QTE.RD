@@ -9,8 +9,8 @@
 #' @param x0 the cutoff point.
 #' @param val a set of candidate values for the CV bandwidth.
 #' @param xl if \emph{xl=0.5}, the CV bandwidth is computed using the 50% of observations closest to \eqn{x_0}.
-#' @param order either 1 or 2. When \emph{p.order=1}, a local linear regression is used, and
-#' when \emph{p.order=2}, a local quadratic regression is used.
+#' @param order either 1 or 2. When \emph{order=1}, a local linear regression is used, and
+#' when \emph{order=2}, a local quadratic regression is used.
 #' @param bdy either 0 or 1. When \emph{bdy=1}, the CV bandwidth is computed by
 #' treating x as a boundary point. Otherwise, x is treated as an interior point.
 #'
@@ -18,10 +18,10 @@
 #' A list with elements:
 #' \describe{
 #' \item{h.cv}{the selected CV bandwidth values at the median.}
-#' \item{cand}{the criterion function evaluated at each of candidate value.}
+#' \item{cand}{values of the criterion function evaluated at each of candidate value.}
 #' }
 #' @export
-#' @seealso [rdq.bandwidth()]
+#' @seealso [rdq.bandwidth]
 #' @importFrom stats quantile
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 #' Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"

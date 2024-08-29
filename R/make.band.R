@@ -1,4 +1,4 @@
-#' Uniform confidencedevtools::submit_cran() bands
+#' Uniform confidence bands for QTE
 #' @description
 #' \code{make.band} constructs uniform confidence bands using the output of \code{rdq.sim}.
 #' The function \code{rdq.band} calls this function to generates uniform bands.
@@ -35,7 +35,7 @@
 #' }
 #' @export
 #' @importFrom stats quantile
-#' @seealso [rdq.band()]
+#' @seealso [rdq.band]
 #' @examples
 #' n = 500
 #' x = runif(n,min=-4,max=4)

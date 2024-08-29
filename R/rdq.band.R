@@ -18,7 +18,6 @@
 #' @param cov either 0 or 1. Set cov=1 when covariates are present in the model;
 #' otherwise set cov=0.
 #' @param alpha a number between 0 and 1, the desired significance level.
-#' @param print.qte a logical flag specifying whether to print an outcome table.
 #'
 #' @return
 #' \describe{
@@ -34,7 +33,7 @@
 #' \item{uband.robust.m}{uniform confidence band for the conditional quantile estimates on the left side of the cutoff, robust to the bias correction.}
 #' }
 #' @export
-#' @seealso [rd.qte()]
+#' @seealso [rd.qte]
 #'
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 #' Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"
@@ -59,7 +58,7 @@
 #' y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + d*z + rnorm(n)
 #' \donttest{D = rdq.band(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,cov=1,alpha=0.1)}
 #'
-rdq.band <- function(y,x,d,x0,z0=NULL,tau,bdw,cov,alpha,print.qte=1){
+rdq.band <- function(y,x,d,x0,z0=NULL,tau,bdw,cov,alpha){
   x <- as.matrix(x)
   dz <- ncol(x)-1
   mis <- apply(apply(cbind(y,x,d),2,is.na),1,max)
@@ -77,7 +76,7 @@ rdq.band <- function(y,x,d,x0,z0=NULL,tau,bdw,cov,alpha,print.qte=1){
   if(length(bdw)==1) {bdw.opt <- 1}
   if(length(bdw)>1 & length(bdw)==length(tau)) {bdw.opt <- 2}
   if(length(bdw)>1 & length(bdw)!=length(tau))
-    {stop("The length of bdw should be one or equal to the length of tau.")}
+  {stop("The length of bdw should be one or equal to the length of tau.")}
   if(bdw.opt==1){
     tt <- sort(unique(c(tau,0.5)))	# qualtile levels to estimate
     hh <- bdw*((2*tt*(1-tt)/(pi*dnorm(qnorm(tt))^{2}))^{1/5})  # quantile specific bandwidths
@@ -102,34 +101,7 @@ rdq.band <- function(y,x,d,x0,z0=NULL,tau,bdw,cov,alpha,print.qte=1){
   ba <- make.band(n,Dc.p=sm$dcp,Dc.m=sm$dcm,Dr.p=sm$drp,Dr.m=sm$drm,dz,cov,taus=tt,hh2[ind],Qy.p=as.matrix(ab$qp.est[ind,]),Qy.m=as.matrix(ab$qm.est[ind,]),bias.p=bp$bias,bias.m=bm$bias,alpha,n.sim)
   # uniform bands for conditional quantiles
   ba2 <- make.band.cq(n,Dc.p=sm$dcp,Dc.m=sm$dcm,Dr.p=sm$drp,Dr.m=sm$drm,dz,cov,taus=tt,hh2[ind],Qy.p=as.matrix(ab$qp.est[ind,]),Qy.m=as.matrix(ab$qm.est[ind,]),bias.p=bp$bias,bias.m=bm$bias,alpha,n.sim)
-  if(print.qte==1){
-    cat("\n\n")
-    cat(format("QTE and Uniform Bands", width = 70, justify = "centre"), "\n")
-    cat(paste(rep("-", 70), collapse = ""), "\n")
-    cat(format("", width = 20), format("Bias cor.", width = 10, justify = "centre"),
-        format(paste((1-alpha)*100,"% Uniform Conf. Band",sep = ""), width = 36, justify = "centre"), "\n")
-    cat(format("Tau", width = 10, justify = "centre"),
-        format("Est.", width = 10, justify = "centre"),
-        format("Est.", width = 10, justify = "centre"),
-        format("Non-robust",width = 18, justify = "centre"),
-        format("Robust",width = 18, justify = "centre") ,"\n")
-    if(cov==0){
-      for (i in 1:length(tt)) {
-        cat(format(tt[i], width = 8, justify = "centre"),
-            formatC(c(ba$qte[i],ba$qte.r[i],ba$uband[i,,],ba$uband.r[i,,]),format="f",digits=3,width=10),
-            "\n", sep = "")
-      }
-    }
-    if(cov==1){
-      for(j in 1:dg){
-        cat(paste(rep("-", 70), collapse = ""), "\n")
-        cat(format(paste("Group-",j,sep=""), width = 10,justify ="centre"),"\n", sep = "")
-        for (i in 1:length(tt)) {
-          cat(format(tt[i], width = 8, justify = "centre"),
-              formatC(c(ba$qte[i,j],ba$qte.r[i,j],ba$uband[i,,j],ba$uband.r[i,,j]),format="f",digits=3, width=10),"\n", sep = "")
-        }
-      }
-    }
-  }
-  return(list(qte = ba$qte, qte.cor = ba$qte.r, uband = ba$uband, uband.robust = ba$uband.r, sig = ba$s, sig.r = ba$s.r, uband.p = ba2$ubandp, uband.m = ba2$ubandm, uband.robust.p = ba2$ubandp.r, uband.robust.m = ba2$ubandm.r))
+  out <- list(qte = ba$qte, qte.cor = ba$qte.r, uband = ba$uband, uband.robust = ba$uband.r, sig = ba$s, sig.r = ba$s.r, uband.p = ba2$ubandp, uband.m = ba2$ubandm, uband.robust.p = ba2$ubandp.r, uband.robust.m = ba2$ubandm.r, tau = tt, alpha = alpha, cov = cov)
+  class(out) <- c("band.qte", class(out))
+  return(out)
 }

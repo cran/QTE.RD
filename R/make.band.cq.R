@@ -48,7 +48,7 @@
 #' }
 #' @export
 #' @importFrom quantreg bandwidth.rq
-#' @seealso [make.band()]
+#' @seealso [make.band]
 #' @examples
 #' n = 500
 #' x = runif(n,min=-4,max=4)

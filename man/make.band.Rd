@@ -2,7 +2,7 @@
 % Please edit documentation in R/make.band.R
 \name{make.band}
 \alias{make.band}
-\title{Uniform confidencedevtools::submit_cran() bands}
+\title{Uniform confidence bands for QTE}
 \usage{
 make.band(n.sam,Dc.p,Dc.m,Dr.p,Dr.m,dz,cov,taus,hh,Qy.p,Qy.m,
      bias.p,bias.m,alpha,n.sim)
@@ -80,5 +80,5 @@ bias.p=bp$bias,bias.m=bm$bias,alpha=0.1,n.sim=200)
 
 }
 \seealso{
-\code{\link[=rdq.band]{rdq.band()}}
+\link{rdq.band}
 }

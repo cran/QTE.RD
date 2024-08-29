@@ -3,7 +3,7 @@
 #' \code{rdq.bandwidth} implements two bandwidth selection rules and obtains the cross-validation (CV) bandwidth and the MSE optimal bandwidth.
 #'
 #' @usage rdq.bandwidth(y, x, d, x0, z0=NULL, cov, cv, val,hp=NULL,pm.each=1,
-#'      bdy=1,p.order=1,xl=0.5,print.qte=1)
+#'      bdy=1,p.order=1,xl=0.5)
 #'
 #' @param y a numeric vector, the outcome variable.
 #' @param x a vector (or a matrix) of covariates, the first column is the running variable.
@@ -23,7 +23,6 @@
 #' @param p.order either 1 or 2. When \emph{p.order=1}, a local linear regression is used, and
 #' when \emph{p.order=2}, a local quadratic regression is used.
 #' @param xl if \emph{xl=0.5}, the CV bandwidth use the 50% of observations closest to \eqn{x_0}.
-#' @param print.qte a logical flag specifying whether to print an outcome table.
 #'
 #' @return
 #' A list with elements:
@@ -56,7 +55,7 @@
 #' y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + d*z + rnorm(n)
 #' rdq.bandwidth(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),cov=1,cv=1,val=(1:4),bdy=1,p.order=1)
 #'
-rdq.bandwidth <- function(y,x,d,x0,z0=NULL,cov,cv,val,hp=NULL,pm.each=1,bdy=1,p.order=1,xl=0.5,print.qte=1){
+rdq.bandwidth <- function(y,x,d,x0,z0=NULL,cov,cv,val,hp=NULL,pm.each=1,bdy=1,p.order=1,xl=0.5){
   x <- as.matrix(x)
   dz <- ncol(x)-1
   mis <- apply(apply(cbind(y,x,d),2,is.na),1,max)
@@ -112,24 +111,7 @@ rdq.bandwidth <- function(y,x,d,x0,z0=NULL,cov,cv,val,hp=NULL,pm.each=1,bdy=1,p.
   h.op.m <- pmin(h.op.m,max(val)); h.op.p <- pmin(h.op.p,max(val))
   bandwidth$opt.m <- h.op.m
   bandwidth$opt.p <- h.op.p
-  if(print.qte==1){
-    cat("\n\n")
-    cat(format("Selected Bandwidths", width = 60, justify = "centre"), "\n")
-    cat(paste(rep("-", 60), collapse = ""), "\n")
-    cat(format("Method", width = 30), "\t", format("Values", width = 12, justify ="centre"), "\n")
-    cat(paste(rep("=", 60), collapse = ""), "\n")
-    cat(format("Cross Validation", width = 30), "\t",
-        format(bandwidth$cv, digits = 3, width = 8, justify ="centre"),"\n")
-    if(cov==0){
-      cat(format("MSE Optimal", width = 30), "\t",
-          format(c(bandwidth$opt.m,bandwidth$opt.p), digits = 3, width=8, justify ="centre"),"\n")
-    }
-    if(cov==1){
-      for(j in 1:dg){
-        cat(format(paste("MSE Optimal,","Group-",j,sep=""), width = 30), "\t",
-            format(c(bandwidth$opt.m[j,],bandwidth$opt.p[j,]), digits = 3, width=8, justify ="centre"),"\n")
-      }
-    }
-  }
+  bandwidth$cov <- cov; bandwidth$dg <- dg
+  class(bandwidth) <- c("bw.qte", class(bandwidth))
   return(bandwidth)
 }

@@ -4,7 +4,7 @@
 \alias{rdq.test}
 \title{tests for QTE}
 \usage{
-rdq.test(y,x,d,x0,z0=NULL,tau,bdw,cov,bias,alpha,type,std.opt=1,print.qte=1)
+rdq.test(y,x,d,x0,z0=NULL,tau,bdw,cov,bias,alpha,type,std.opt=1)
 }
 \arguments{
 \item{y}{a numeric vector, the outcome variable.}
@@ -44,14 +44,13 @@ and set \emph{type} to 4 to test the null hypothesis of uniformly non-positive t
 
 \item{std.opt}{either 0 or 1. If \emph{std.opt=1}, the test statistic is standardized so that
 the variance is equalized across quantiles; if \emph{std.opt=0}, the test is not standardized.}
-
-\item{print.qte}{a logical flag specifying whether to print an outcome table.}
 }
 \value{
 A list with elements:
 \describe{
-\item{te.st}{test statistics}
+\item{statistic}{test statistics.}
 \item{cr.va}{critical values.}
+\item{p.value}{p values.}
 }
 }
 \description{

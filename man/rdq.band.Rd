@@ -4,7 +4,7 @@
 \alias{rdq.band}
 \title{Uniform confidence bands for QTE}
 \usage{
-rdq.band(y, x, d, x0, z0 = NULL, tau, bdw, cov, alpha, print.qte = 1)
+rdq.band(y, x, d, x0, z0 = NULL, tau, bdw, cov, alpha)
 }
 \arguments{
 \item{y}{a numeric vector, the outcome variable.}
@@ -30,8 +30,6 @@ the function will use these values for the respective quantiles accordingly.}
 otherwise set cov=0.}
 
 \item{alpha}{a number between 0 and 1, the desired significance level.}
-
-\item{print.qte}{a logical flag specifying whether to print an outcome table.}
 }
 \value{
 \describe{
@@ -78,5 +76,5 @@ Keming Yu and M. C. Jones (1998), “Local Linear Quantile Regression,”
 Journal of the American Statistical Association, 93(441), 228–237; https://doi.org/10.2307/2669619
 }
 \seealso{
-\code{\link[=rd.qte]{rd.qte()}}
+\link{rd.qte}
 }

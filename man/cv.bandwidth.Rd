@@ -21,8 +21,8 @@ cv.bandwidth(y, x, z, dz, x0, val, xl, order, bdy)
 
 \item{xl}{if \emph{xl=0.5}, the CV bandwidth is computed using the 50\% of observations closest to \eqn{x_0}.}
 
-\item{order}{either 1 or 2. When \emph{p.order=1}, a local linear regression is used, and
-when \emph{p.order=2}, a local quadratic regression is used.}
+\item{order}{either 1 or 2. When \emph{order=1}, a local linear regression is used, and
+when \emph{order=2}, a local quadratic regression is used.}
 
 \item{bdy}{either 0 or 1. When \emph{bdy=1}, the CV bandwidth is computed by
 treating x as a boundary point. Otherwise, x is treated as an interior point.}
@@ -31,7 +31,7 @@ treating x as a boundary point. Otherwise, x is treated as an interior point.}
 A list with elements:
 \describe{
 \item{h.cv}{the selected CV bandwidth values at the median.}
-\item{cand}{the criterion function evaluated at each of candidate value.}
+\item{cand}{values of the criterion function evaluated at each of candidate value.}
 }
 }
 \description{
@@ -56,5 +56,5 @@ under Sharp Regression Discontinuity Designs," Journal of Business and Economic 
 37(4), 625–647; https://doi.org/10.1080/07350015.2017.1407323
 }
 \seealso{
-\code{\link[=rdq.bandwidth]{rdq.bandwidth()}}
+\link{rdq.bandwidth}
 }

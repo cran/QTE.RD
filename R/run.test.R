@@ -34,11 +34,12 @@
 #'
 #' @return A list with elements:
 #' \describe{
-#' \item{test.stat}{test statistics}
+#' \item{test.stat}{test statistics.}
 #' \item{cr.value}{critical values.}
+#' \item{p.val}{p values.}
 #' }
 #' @export
-#' @seealso [rdq.test()]
+#' @seealso [rdq.test]
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 #' Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"
 #' The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
@@ -75,6 +76,7 @@ run.test <- function(n.sam,dz,taus,hh,Dc.p,Dc.m,Dr.p,Dr.m,Qy.p,Qy.m,bias.p,bias.
   dg <- dim(Dc.p)[1]
   ts <- array(0,c(dg,1))
   za <- array(0,c(dg,length(alpha)))
+  pv <- array(0,c(dg,1))
   for(i in 1:dg){
     Qy <- Qy.p[,i] - Qy.m[,i]
     Qy.adj <- Qy - (bias.p[,i] - bias.m[,i])
@@ -115,7 +117,10 @@ run.test <- function(n.sam,dz,taus,hh,Dc.p,Dc.m,Dr.p,Dr.m,Qy.p,Qy.m,bias.p,bias.
       zz <- apply(abs((Gr >= 0)*Gr),1,max)
       za[i,] <- quantile(zz,probs=(1-alpha))		# critical values
     }
+    pa <- mean(zz >= ts[i])
+    if(pa < n.sim^{-1}){pv[i] <- n.sim^{-1}}
+    else {pv[i] <- pa}
   }
   colnames(za) <- (1-alpha)
-  return(list(test.stat = ts, cr.value = za))
+  return(list(test.stat = ts, cr.value = za, p.val = pv))
 }

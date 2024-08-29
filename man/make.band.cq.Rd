@@ -93,5 +93,5 @@ bias.p=bp$bias,bias.m=bm$bias,alpha=0.1,n.sim=200)
 
 }
 \seealso{
-\code{\link[=make.band]{make.band()}}
+\link{make.band}
 }

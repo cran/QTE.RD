@@ -55,8 +55,9 @@ the variance is equalized across quantiles; if \emph{std.opt=0}, the test is not
 \value{
 A list with elements:
 \describe{
-\item{test.stat}{test statistics}
+\item{test.stat}{test statistics.}
 \item{cr.value}{critical values.}
+\item{p.val}{p values.}
 }
 }
 \description{
@@ -92,5 +93,5 @@ Processes in Partially Linear Models with Applications to the Impact of Unemploy
 The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
 }
 \seealso{
-\code{\link[=rdq.test]{rdq.test()}}
+\link{rdq.test}
 }

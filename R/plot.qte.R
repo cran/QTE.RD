@@ -3,7 +3,7 @@
 #' \code{plot.qte} generates plots summarizing the QTE estimates and their uniform confidence bands, helping users visualize the results.
 #' It also makes plots for conditional quantile processes for each side of the cutoff.
 #'
-#' @param x an object of class "qte" as produce by \code{rd.qte}.
+#' @param x an object of class "qte" or "summary.qte" produce by \code{rd.qte}.
 #' @param ptype either 1 or 2. Set \emph{ptype=1} for the QTE plots, and
 #' \emph{ptype=2} for the conditional quantile plots. The default value is 1.
 #' @param ytext the y-axis label.
@@ -24,21 +24,25 @@
 #' d = (x > 0)
 #' y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + rnorm(n)
 #' tlevel = seq(0.1,0.9,by=0.1)
-#' \donttest{A = rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1,cband=1,alpha=0.1)}
+#' \donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1)}
 #' \donttest{plot(A)}
 #'
 #' y.text = "test scores"
 #' m.text = "QTE and Uniform band"
 #' \donttest{plot(A,ytext=y.text,mtext=m.text)}
 #'
+#' \donttest{A2 <- summary(A,alpha=0.1)}
+#' \donttest{plot(A2)}
+#'
 # (continued) With covariates
 #' z = sample(c(0,1),n,replace=TRUE)
 #' y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + d*z + rnorm(n)
-#' \donttest{A = rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,cov=1,bias=1,cband=1,alpha=0.1)}
+#' \donttest{A <- rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,cov=1,bias=1)}
+#' \donttest{A2 <- summary(A,alpha=0.1)}
 #'
 #' y.text = "test scores"
 #' m.text = c("D=0","D=1")
-#' \donttest{plot(A,ytext=y.text,mtext=m.text)}
+#' \donttest{plot(A2,ytext=y.text,mtext=m.text)}
 #'
 #' # conditional quantile plots
 #' n = 500
@@ -46,28 +50,30 @@
 #' d = (x > 0)
 #' y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + rnorm(n)
 #' tlevel = seq(0.1,0.9,by=0.1)
-#' \donttest{A = rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1,cband=1,alpha=0.1)}
-#'
-#' \donttest{plot(A,ptype=2)}
+#' \donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1)}
+#' \donttest{A2 <- summary(A,alpha=0.1)}
 #'
 #' y.text = "test scores"
 #' m.text = "Conditional quantile functions"
 #' sub.text = c("D=0 group","D=1 group")
-#' \donttest{plot(A,ptype=2,ytext=y.text,mtext=m.text,subtext=sub.text)}
+#' \donttest{plot(A2,ptype=2,ytext=y.text,mtext=m.text,subtext=sub.text)}
 #'
 #'
 plot.qte <- function(x,ptype=1,ytext=NULL,mtext=NULL,subtext=NULL,...){
-  if(!(ptype %in% c(1,2))){stop("The option 'ptype' should be 1 or 2.")}
+  if(!(ptype %in% c(1,2))){stop("The option 'ptype' should be either 1 or 2.")}
   if(ptype==1){qte <- x$qte; band <- x$uband}
   if(ptype==2){qp <- x$qp; qm <- x$qm; bandp <- x$uband.p; bandm <- x$uband.m}
   tau <- x$tau; cov <- x$cov
   oldpar <- par(no.readonly = TRUE)
   on.exit(par(oldpar), add = TRUE)
+  cls.type <- ("summary.qte" %in% class(x)) # if 1, point estimates + uniform bands
   # QTE plots
   if(ptype==1){
+    if(cls.type==0){band <- NULL}
     if(cov==0){
       ran <- cbind(qte,band[,,1])
-      y.ran <- c(min(ran),max(ran))*1.2
+      inc <- (max(ran)-min(ran))*0.1
+      y.ran <- c((min(ran)-inc),(max(ran)+inc))
       plot(tau,qte,ylim=y.ran,xaxt="n",xlab="Quantile Index",ylab=ytext,type="l",lty=1,cex.lab=1.3,cex.axis=1.4)
       axis(1,at=tau,labels=tau,cex.axis=1.4)
       title(main=paste(mtext," ",sep=""))
@@ -76,9 +82,10 @@ plot.qte <- function(x,ptype=1,ytext=NULL,mtext=NULL,subtext=NULL,...){
     }
     if(cov==1){
       b2 <- band
-      dim(b2) <- c(nrow(band),(2*dim(band)[3]))
+      if(cls.type==1){dim(b2) <- c(nrow(band),(2*dim(band)[3]))}
       ran <- cbind(qte,b2)
-      y.ran <- c(min(ran),max(ran))*1.2
+      inc <- (max(ran)-min(ran))*0.1
+      y.ran <- c((min(ran)-inc),(max(ran)+inc))
       dg <- dim(qte)[2]
       if(length(mtext)==0){mtext = sprintf("Group%d",seq(1:dg))}
       if(dg==2){layout(matrix(c(1,2), nrow=1, ncol=2, byrow = TRUE), widths=c(3,3), heights=c(1,1))}
@@ -98,11 +105,13 @@ plot.qte <- function(x,ptype=1,ytext=NULL,mtext=NULL,subtext=NULL,...){
   }
   # conditional quantile plots
   if(ptype==2){
+    if(cls.type==0){bandp <- NULL; bandm <- NULL}
     if(length(qm)==0){q1 <- qp; band1 <- bandp; q2 <- NULL; band2 <- NULL}
     if(length(qp)==0){q1 <- qm; band1 <- bandm; q2 <- NULL; band2 <- NULL}
     if(length(qp)>0 & length(qm)>0){q1 <- qp; q2 <- qm; band1 <- bandp; band2 <- bandm}
     ran <- cbind(q1,q2,band1[,,1],band2[,,1])
-    y.ran <- c(min(ran),max(ran))
+    inc <- (max(ran)-min(ran))*0.1
+    y.ran <- c((min(ran)-inc),(max(ran)+inc))
     if(cov==0){
       plot(tau,q1,xlab="Quantile Index",ylim=y.ran,ylab=ytext,type="l")
       polygon(rbind(cbind(tau,band1[,1,1]),cbind(rev(tau),rev(band1[,2,1]))),col="#64646437", border="grey", pch=16,cex=.5)

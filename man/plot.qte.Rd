@@ -7,7 +7,7 @@
 \method{plot}{qte}(x, ptype = 1, ytext = NULL, mtext = NULL, subtext = NULL, ...)
 }
 \arguments{
-\item{x}{an object of class "qte" as produce by \code{rd.qte}.}
+\item{x}{an object of class "qte" or "summary.qte" produce by \code{rd.qte}.}
 
 \item{ptype}{either 1 or 2. Set \emph{ptype=1} for the QTE plots, and
 \emph{ptype=2} for the conditional quantile plots. The default value is 1.}
@@ -34,20 +34,24 @@ x = runif(n,min=-4,max=4)
 d = (x > 0)
 y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + rnorm(n)
 tlevel = seq(0.1,0.9,by=0.1)
-\donttest{A = rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1,cband=1,alpha=0.1)}
+\donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1)}
 \donttest{plot(A)}
 
 y.text = "test scores"
 m.text = "QTE and Uniform band"
 \donttest{plot(A,ytext=y.text,mtext=m.text)}
 
+\donttest{A2 <- summary(A,alpha=0.1)}
+\donttest{plot(A2)}
+
 z = sample(c(0,1),n,replace=TRUE)
 y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + d*z + rnorm(n)
-\donttest{A = rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,cov=1,bias=1,cband=1,alpha=0.1)}
+\donttest{A <- rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,cov=1,bias=1)}
+\donttest{A2 <- summary(A,alpha=0.1)}
 
 y.text = "test scores"
 m.text = c("D=0","D=1")
-\donttest{plot(A,ytext=y.text,mtext=m.text)}
+\donttest{plot(A2,ytext=y.text,mtext=m.text)}
 
 # conditional quantile plots
 n = 500
@@ -55,14 +59,13 @@ x = runif(n,min=-4,max=4)
 d = (x > 0)
 y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + rnorm(n)
 tlevel = seq(0.1,0.9,by=0.1)
-\donttest{A = rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1,cband=1,alpha=0.1)}
-
-\donttest{plot(A,ptype=2)}
+\donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1)}
+\donttest{A2 <- summary(A,alpha=0.1)}
 
 y.text = "test scores"
 m.text = "Conditional quantile functions"
 sub.text = c("D=0 group","D=1 group")
-\donttest{plot(A,ptype=2,ytext=y.text,mtext=m.text,subtext=sub.text)}
+\donttest{plot(A2,ptype=2,ytext=y.text,mtext=m.text,subtext=sub.text)}
 
 
 }
