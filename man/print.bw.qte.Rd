@@ -14,3 +14,4 @@
 \description{
 Print a bw.qte object
 }
+\keyword{internal}

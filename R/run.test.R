@@ -38,12 +38,12 @@
 #' \item{cr.value}{critical values.}
 #' \item{p.val}{p values.}
 #' }
-#' @export
 #' @seealso [rdq.test]
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 #' Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"
 #' The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
 #'
+#' @keywords internal
 #' @examples
 #' n = 500
 #' x = runif(n,min=-4,max=4)
@@ -62,8 +62,9 @@
 #' bp = rdq.bias(y[d==1],x[d==1],dz=0,x0=0,z0=NULL,taus=tlevel,hh,hh,fx=fp$ff[(d==1),],cov=0)
 #' bm = rdq.bias(y[d==0],x[d==0],dz=0,x0=0,z0=NULL,taus=tlevel,hh,hh,fx=fm$ff[(d==0),],cov=0)
 #'
-#' sa = rdq.sim(x=x,d=d,x0=0,z0=NULL,dz=0,cov=0,tt=tlevel,hh,hh,fxp=fp$ff,fxm=fm$ff,n.sim=200)
-#' bt <- run.test(n,dz=0,taus=tlevel,hh,Dc.p=sa$dcp,Dc.m=sa$dcm,Dr.p=sa$drp,Dr.m=sa$drm,
+#' sa <- QTE.RD:::rdq.sim(x=x,d=d,x0=0,z0=NULL,dz=0,cov=0,tt=tlevel,hh,hh,
+#' fxp=fp$ff,fxm=fm$ff,n.sim=200)
+#' bt <- QTE.RD:::run.test(n,dz=0,taus=tlevel,hh,Dc.p=sa$dcp,Dc.m=sa$dcm,Dr.p=sa$drp,Dr.m=sa$drm,
 #' Qy.p=as.matrix(ab$qp.est[sel,]),Qy.m=as.matrix(ab$qm.est[sel,]),bias.p=bp$bias,bias.m=bm$bias,
 #' cov=0,bias=1,alpha=0.1,n.sim=200,test.type=1,std.opt=1)
 #'
@@ -80,19 +81,20 @@ run.test <- function(n.sam,dz,taus,hh,Dc.p,Dc.m,Dr.p,Dr.m,Qy.p,Qy.m,bias.p,bias.
   for(i in 1:dg){
     Qy <- Qy.p[,i] - Qy.m[,i]
     Qy.adj <- Qy - (bias.p[,i] - bias.m[,i])
-    if(bias==0){Gs <- t(Dc.p[i,,] - Dc.m[i,,])}
-    if(bias==1){Gs <- t(Dr.p[i,,] - Dr.m[i,,])}
-    if(m==1){shat <- sqrt(mean(Gs*Gs))}
-    if(m >1){shat <- sqrt(apply((Gs*Gs),2,mean))}
+    if(bias==0) {Gs <- t(Dc.p[i,,] - Dc.m[i,,])}
+    if(bias==1) {Gs <- t(Dr.p[i,,] - Dr.m[i,,])}
+    if(m==1) {shat <- sqrt(mean(Gs*Gs))}
+    if(m >1) {shat <- sqrt(apply((Gs*Gs),2,mean))}
+    if(m==1) {Gs <- t(Gs)}
     if(std.opt==1){
       Gr <- Gs/matrix(rep(shat,n.sim),byrow=TRUE,nrow=n.sim)
-      if(bias==0){Q.t <- (sqrt(n.sam*hh)/shat)*Qy}
-      if(bias==1){Q.t <- (sqrt(n.sam*hh)/shat)*Qy.adj}
+      if(bias==0) {Q.t <- (sqrt(n.sam*hh)/shat)*Qy}
+      if(bias==1) {Q.t <- (sqrt(n.sam*hh)/shat)*Qy.adj}
     }
     if(std.opt==0){
       Gr <- Gs
-      if(bias==0){Q.t <- sqrt(n.sam*hh)*Qy}
-      if(bias==1){Q.t <- sqrt(n.sam*hh)*Qy.adj}
+      if(bias==0) {Q.t <- sqrt(n.sam*hh)*Qy}
+      if(bias==1) {Q.t <- sqrt(n.sam*hh)*Qy.adj}
     }
     if(test.type==1){ # Treatment Significance
       ts[i] <- max(abs(Q.t))
@@ -118,9 +120,8 @@ run.test <- function(n.sam,dz,taus,hh,Dc.p,Dc.m,Dr.p,Dr.m,Qy.p,Qy.m,bias.p,bias.
       za[i,] <- quantile(zz,probs=(1-alpha))		# critical values
     }
     pa <- mean(zz >= ts[i])
-    if(pa < n.sim^{-1}){pv[i] <- n.sim^{-1}}
-    else {pv[i] <- pa}
+    pv[i] <- max(pa, n.sim^{-1})
   }
-  colnames(za) <- (1-alpha)
+  colnames(za) <- sprintf("%.3f", 1 - alpha)
   return(list(test.stat = ts, cr.value = za, p.val = pv))
 }

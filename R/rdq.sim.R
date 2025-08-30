@@ -22,7 +22,7 @@
 #' \item{drp}{realizations from the asymptotic distribution of the bias corrected conditional quantile process, from the right side of \eqn{x_0}.}
 #' \item{drm}{realizations from the asymptotic distribution of the bias corrected conditional quantile process, from the left side of \eqn{x_0}.}
 #' }
-#' @export
+#' @keywords internal
 #'
 #' @examples
 #' n = 500
@@ -38,11 +38,11 @@
 #' delta = c(0.05,0.09,0.14,0.17,0.19,0.17,0.14,0.09,0.05)
 #' fp = rdq.condf(x=x,Q=ab$qp.est,bcoe=ab$bcoe.p,taus=tlevel,taul=tlevel2,delta,cov=0)
 #' fm = rdq.condf(x=x,Q=ab$qm.est,bcoe=ab$bcoe.m,taus=tlevel,taul=tlevel2,delta,cov=0)
-#' sa = rdq.sim(x=x,d=d,x0=0,z0=NULL,dz=0,cov=0,tt=tlevel,hh,hh,fxp=fp$ff,fxm=fm$ff,n.sim=200)
+#' sa = QTE.RD:::rdq.sim(x=x,d=d,x0=0,z0=NULL,dz=0,cov=0,tt=tlevel,hh,hh,fxp=fp$ff,fxm=fm$ff,n.sim=200)
 #'
 rdq.sim <- function(x,d,x0,z0,dz,cov,tt,hh,hh2,fxp,fxm,n.sim){
   m = length(tt)
-  if(cov==0){x <- as.vector(x); n <- length(x); z <- x - x0; w <- NULL; dg <- 1}
+  if(cov==0){x <- as.vector(x); d <- as.vector(d); n <- length(x); z <- x - x0; w <- NULL; dg <- 1}
   if(cov==1){n <- nrow(x); z <- x[,1] - x0; w <- x[,2:(1+dz)]}
   if(cov==1 & dz==1){dg <- length(z0)}	# number of groups by covariates
   if(cov==1 & dz >1){dg <- nrow(z0)}
@@ -71,8 +71,8 @@ rdq.sim <- function(x,d,x0,z0,dz,cov,tt,hh,hh2,fxp,fxm,n.sim){
       p3.m[,k,j] <- apply(((1-d)*uu*kx2*xj2),2,sum)/sqrt(en2)
     }
   }
-  Gs <- array(0,c(dg,m,n.sim,2))
-  Gr <- Gs
+  Gs1 <- array(0,c(dg,m,n.sim)); Gs2 <- Gs1
+  Gr1 <- Gs1; Gr2 <- Gr1
   for(k in 1:m){
     kx <- depa(z/hh[k])
     kx2 <- depa(z/hh2[k])
@@ -89,8 +89,8 @@ rdq.sim <- function(x,d,x0,z0,dz,cov,tt,hh,hh2,fxp,fxm,n.sim){
     d1p <- apply(pp1, 2, function(x) q1.p%*%x)
     d1m <- apply(pm1, 2, function(x) q1.m%*%x)
     # for robust band
-    q2.p <- solve(crossprod((kx*xj),(d*fxp[,k]*xj))/en)
-    q2.m <- solve(crossprod((kx*xj),((1-d)*fxm[,k]*xj))/en)
+    q2.p <- q1.p
+    q2.m <- q1.m
     p2.p <- crossprod((d*fxp[,k]*xj),(kx*qj))/en
     p2.m <- crossprod(((1-d)*fxm[,k]*xj),(kx*qj))/en
     d2p <- q2.p %*% p2.p
@@ -104,23 +104,23 @@ rdq.sim <- function(x,d,x0,z0,dz,cov,tt,hh,hh2,fxp,fxm,n.sim){
     r1 <- (hh[k]/hh2[k])^{(1+4)/2}
     # collect outcomes
     if(cov==0){
-      Gs[1,k,,1] <- d1p[1,]
-      Gs[1,k,,2] <- d1m[1,]
-      Gr[1,k,,1] <- d1p[1,] - r1*d2p[1,]*d3p[chs,]
-      Gr[1,k,,2] <- d1m[1,] - r1*d2m[1,]*d3m[chs,]
+      Gs1[1,k,] <- d1p[1,]
+      Gs2[1,k,] <- d1m[1,]
+      Gr1[1,k,] <- d1p[1,] - r1*d2p[1,]*d3p[chs,]
+      Gr2[1,k,] <- d1m[1,] - r1*d2m[1,]*d3m[chs,]
     }
     if(cov==1){
       for(i in 1:dg){
         if(dz==1){z.eval <- c(1,z0[i])}
         if(dz>=2){z.eval <- c(1,z0[i,])}
-        Gs[i,k,,1] <- apply(d1p[1:(1+dz),], 2, function(x) crossprod(z.eval,x))
-        Gs[i,k,,2] <- apply(d1m[1:(1+dz),], 2, function(x) crossprod(z.eval,x))
+        Gs1[i,k,] <- apply(d1p[1:(1+dz),], 2, function(x) crossprod(z.eval,x))
+        Gs2[i,k,] <- apply(d1m[1:(1+dz),], 2, function(x) crossprod(z.eval,x))
         d21p <- z.eval %*% d2p[1:(1+dz),]
         d21m <- z.eval %*% d2m[1:(1+dz),]
-        Gr[i,k,,1] <- Gs[i,k,,1] - r1*apply(d3p[chs,], 2, function(x) d21p %*% x)
-        Gr[i,k,,2] <- Gs[i,k,,2] - r1*apply(d3m[chs,], 2, function(x) d21m %*% x)
+        Gr1[i,k,] <- Gs1[i,k,] - r1*apply(d3p[chs,], 2, function(x) d21p %*% x)
+        Gr2[i,k,] <- Gs2[i,k,] - r1*apply(d3m[chs,], 2, function(x) d21m %*% x)
       }
     }
   }
-  return(list(dcp = Gs[,,,1], dcm = Gs[,,,2], drp = Gr[,,,1], drm = Gr[,,,2]))
+  return(list(dcp = Gs1, dcm = Gs2, drp = Gr1, drm = Gr2))
 }

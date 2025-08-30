@@ -14,3 +14,4 @@
 \description{
 Print a test.qte object
 }
+\keyword{internal}

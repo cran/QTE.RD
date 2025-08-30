@@ -21,6 +21,7 @@
 #' \item{cand}{values of the criterion function evaluated at each of candidate value.}
 #' }
 #' @export
+#' @keywords internal
 #' @seealso [rdq.bandwidth]
 #' @importFrom stats quantile
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
@@ -44,8 +45,7 @@ cv.bandwidth <- function(y, x, z, dz, x0, val, xl, order, bdy){
   x.m <- x.u[(abs(x.u-x0) < wdt) & x.u!=x0]
   if(dz>=1){
     z <- as.matrix(z)
-    if(order==1){sel <- (2+1):(2+dz)}
-    if(order==2){sel <- (3+1):(3+dz)}
+    sel <- if(order==1) (2+1):(2 + dz) else (3+1):(3 + dz)
   }
   cri <- array(0,c(length(val),1))
   for (i in 1:length(val)){
@@ -66,8 +66,7 @@ cv.bandwidth <- function(y, x, z, dz, x0, val, xl, order, bdy){
       yy <- y[index]
       ww <- depa(xx/val[i])
       if(order==1){ # local linear regression
-        if(dz==0){xs <- xx}
-        if(dz!=0){xs <- cbind(xx,z[index,],(xx*z[index,]))}
+        xs <- if(dz == 0) xx else cbind(xx, z[index,], xx*z[index,])
       }
       if(order==2){ # local quadratic regression
         if(dz==0){xs <- cbind(xx,(xx^2))}

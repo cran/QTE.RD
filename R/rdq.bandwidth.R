@@ -2,16 +2,13 @@
 #' @description
 #' \code{rdq.bandwidth} implements two bandwidth selection rules and obtains the cross-validation (CV) bandwidth and the MSE optimal bandwidth.
 #'
-#' @usage rdq.bandwidth(y, x, d, x0, z0=NULL, cov, cv, val,hp=NULL,pm.each=1,
-#'      bdy=1,p.order=1,xl=0.5)
+#' @usage rdq.bandwidth(y, x, d, x0, z0=NULL, cv, val, hp=NULL, pm.each=0, bdy=1, p.order=1, xl=0.5)
 #'
 #' @param y a numeric vector, the outcome variable.
 #' @param x a vector (or a matrix) of covariates, the first column is the running variable.
 #' @param d a numeric vector, the treatment status.
 #' @param x0 the cutoff point.
 #' @param z0 the value of the covariates at which to evaluate the effects.
-#' @param cov either 0 or 1. Set \emph{cov=1} when covariates are present in the model;
-#' otherwise set \emph{cov=0}.
 #' @param cv either 0 or 1. When \emph{cv=1}, both the CV and MSE optimal bandwidths
 #' are produced. When \emph{cv=0}, the MSE optimal bandwidth is produced.
 #' @param val a set of candidate values for the CV bandwidth.
@@ -22,7 +19,7 @@
 #' @param bdy either 0 or 1. When \emph{bdy=1}, the CV bandwidth uses the boundary point procdure.
 #' @param p.order either 1 or 2. When \emph{p.order=1}, a local linear regression is used, and
 #' when \emph{p.order=2}, a local quadratic regression is used.
-#' @param xl if \emph{xl=0.5}, the CV bandwidth use the 50% of observations closest to \eqn{x_0}.
+#' @param xl if `xl=0.5`, the CV bandwidth use the 50% of observations closest to \eqn{x_0}.
 #'
 #' @return
 #' A list with elements:
@@ -35,10 +32,10 @@
 #'
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 #' Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"
-#' The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
+#' The Review of Economics and Statistics; \doi{10.1162/rest_a_01168}
 #' @references Zhongjun Qu and Jungmo Yoon (2019), "Uniform Inference on Quantile Effects
 #' under Sharp Regression Discontinuity Designs," Journal of Business and Economic Statistics,
-#' 37(4), 625–647; https://doi.org/10.1080/07350015.2017.1407323
+#' 37(4), 625–647; \doi{10.1080/07350015.2017.1407323}
 #'
 #' @examples
 #' # Without covariate
@@ -47,17 +44,18 @@
 #' d = (x > 0)
 #' y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + rnorm(n)
 #' tlevel = seq(0.1,0.9,by=0.1)
-#' rdq.bandwidth(y=y,x=x,d=d,x0=0,z0=NULL,cov=0,cv=1,val=(1:4))
-#' rdq.bandwidth(y=y,x=x,d=d,x0=0,z0=NULL,cov=0,cv=0,val=(1:4),hp=2)
+#' rdq.bandwidth(y=y,x=x,d=d,x0=0,z0=NULL,cv=1,val=(1:4))
+#' rdq.bandwidth(y=y,x=x,d=d,x0=0,z0=NULL,cv=0,val=(1:4),hp=2)
 #'
 #' # (continued) With covariates
 #' z = sample(c(0,1),n,replace=TRUE)
 #' y = x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + d*z + rnorm(n)
-#' rdq.bandwidth(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),cov=1,cv=1,val=(1:4),bdy=1,p.order=1)
+#' rdq.bandwidth(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),cv=1,val=(1:4),bdy=1,p.order=1)
 #'
-rdq.bandwidth <- function(y,x,d,x0,z0=NULL,cov,cv,val,hp=NULL,pm.each=1,bdy=1,p.order=1,xl=0.5){
+rdq.bandwidth <- function(y,x,d,x0,z0=NULL,cv,val,hp=NULL,pm.each=0,bdy=1,p.order=1,xl=0.5){
   x <- as.matrix(x)
   dz <- ncol(x)-1
+  cov <- if(dz == 0) 0 else 1
   mis <- apply(apply(cbind(y,x,d),2,is.na),1,max)
   y <- y[mis==0]; x <- as.matrix(x[mis==0,]); d <- d[mis==0]	# drop missing observations
   n <- length(y)
@@ -99,8 +97,8 @@ rdq.bandwidth <- function(y,x,d,x0,z0=NULL,cov,cv,val,hp=NULL,pm.each=1,bdy=1,p.
     h.op.m <- array(0,c(dg,1))
     h.op.p <- array(0,c(dg,1))
     for(l in 1:dg){
-      h.op.m[l] <- ((mean(sim$dcm[l,]^2)/(4*(bm$bhat[l]^2)))^{1/5})*(n^{-1/5})
-      h.op.p[l] <- ((mean(sim$dcp[l,]^2)/(4*(bp$bhat[l]^2)))^{1/5})*(n^{-1/5})
+      h.op.m[l] <- ((mean(sim$dcm[l,,]^2)/(4*(bm$bhat[l]^2)))^{1/5})*(n^{-1/5})
+      h.op.p[l] <- ((mean(sim$dcp[l,,]^2)/(4*(bp$bhat[l]^2)))^{1/5})*(n^{-1/5})
     }
   }
   # save bandwidth values

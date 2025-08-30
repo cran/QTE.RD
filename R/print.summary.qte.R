@@ -3,8 +3,8 @@
 #'
 #' @param x object returned from \code{summary.qte}.
 #' @param ... optional arguments.
-#'
 #' @export
+#' @keywords internal
 #'
 print.summary.qte <- function(x,...){
   cov <- x$cov

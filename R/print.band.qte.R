@@ -3,6 +3,7 @@
 #' @param x object returned from \code{band.qte}.
 #' @param ... optional arguments.
 #' @export
+#' @keywords internal
 #'
 print.band.qte <- function(x,...){
   cov <- x$cov

@@ -58,3 +58,4 @@ under Sharp Regression Discontinuity Designs," Journal of Business and Economic 
 \seealso{
 \link{rdq.bandwidth}
 }
+\keyword{internal}

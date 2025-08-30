@@ -14,3 +14,4 @@
 \description{
 Print a band.qte object
 }
+\keyword{internal}

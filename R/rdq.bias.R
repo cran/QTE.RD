@@ -11,8 +11,8 @@
 #' @param h.tau the bandwidth values (specified for each quantile level), for estimating conditional quantiles.
 #' @param h.tau2 the bandwidth values for the local quadratic quantile regression, for estimating the bias terms.
 #' @param fx conditional density estimates.
-#' @param cov either 0 or 1. Set \emph{cov=1} if covariates are present in the model;
-#' otherwise set \emph{cov=0}.
+#' @param cov either 0 or 1. Set `cov=1` if covariates are present in the model;
+#' otherwise set `cov=0`.
 #'
 #' @return A list with elements:
 #' \describe{
@@ -23,7 +23,7 @@
 #'
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 #' Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"
-#' The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
+#' The Review of Economics and Statistics; \doi{10.1162/rest_a_01168}
 #'
 #' @examples
 #' n = 500
@@ -45,7 +45,7 @@
 rdq.bias <- function(y,x,dz,x0,z0,taus,h.tau,h.tau2,fx,cov){
   n <- length(y)
   m <- length(taus)
-  if(cov==0){z <- x - x0; w <- NULL; x <- as.vector(x); dg <- 1}
+  if(cov==0){x <- as.vector(x); z <- x - x0; w <- NULL; dg <- 1}
   if(cov==1){z <- x[,1] - x0; w <- x[,-1]}
   if(cov==1 & dz==1){dg <- length(z0)}	# number of groups by covariates
   if(cov==1 & dz >1){dg <- nrow(z0)}
@@ -68,14 +68,15 @@ rdq.bias <- function(y,x,dz,x0,z0,taus,h.tau,h.tau2,fx,cov){
       b.hat[k,1] <- cj %*% gam2
     }
     if(cov==1){
+      fx <- as.matrix(fx)
       wj <- cbind(1,w,zh,(w*zh))
       qj <- cbind((zh^2),(w*(zh^2)))
       sel <- 1:(1+dz)
+      cj <- solve(crossprod((wj*fx[,k]),(wk*wj))) %*% crossprod((wj*fx[,k]),(wk*qj))
+      bproj <- (cj %*% gam2)[sel]
       for(i in 1:dg){
-        if(dz==1){zz0 <- c(1,z0[i])}
-        if(dz >1){zz0 <- c(1,z0[i,])}
-        cj <- solve(crossprod((wj*fx[,k]),(wk*wj))) %*% crossprod((wj*fx[,k]),(wk*qj))
-        b.hat[k,i] <- zz0 %*% (cj %*% gam2)[sel]
+        zz0 <- if (dz == 1) c(1, z0[i]) else c(1, z0[i, ])
+        b.hat[k, i] <- zz0 %*% bproj
       }
     }
   }

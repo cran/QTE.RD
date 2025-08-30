@@ -20,8 +20,8 @@ It is needed to estimate the tail parts of conditional density functions more pr
 
 \item{delta}{bandwidths for estimating the conditional density.}
 
-\item{cov}{either 0 or 1. Set \emph{cov=1} if covariates are present in the model;
-otherwise set \emph{cov=0}.}
+\item{cov}{either 0 or 1. Set \code{cov=1} if covariates are present in the model;
+otherwise set \code{cov=0}.}
 }
 \value{
 conditional density function estimates

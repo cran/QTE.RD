@@ -3,6 +3,7 @@
 #' @param x object returned from \code{bandwidth.qte}.
 #' @param ... optional arguments.
 #' @export
+#' @keywords internal
 #'
 print.bw.qte <- function(x,...){
   cat("\n\n")

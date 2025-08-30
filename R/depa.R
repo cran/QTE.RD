@@ -6,7 +6,7 @@
 #'
 #' @return values.
 #' @export
-#'
+#' @keywords internal
 #' @examples
 #' depa(0)
 #' depa(seq(-1,1,by=0.05))

@@ -1,14 +1,16 @@
 #' QTE and its uniform confidence band.
 #'
 #' @description
-#' \code{rd.qte} is the main function of the QTE.RD package. If \emph{cov=1}, it estimates QTE for each subgroup defined by covariates.
-#' If \emph{cov=0}, it estimate QTE without covariates. If \emph{bias=1}, it corrects the bias in QTE estimates and obtains the robust
-#' confidence band and if \emph{bias=0}, no bias correction is implemented.
+#' \code{rd.qte} is the main function of the QTE.RD package. It estimates QTE with/without covariates.
+#' If \emph{bias=1}, it corrects the bias in QTE estimates and obtains the robust confidence band and if \emph{bias=0}, no bias correction is implemented.
 #'
-#' @usage rd.qte(y, x, d, x0, z0=NULL, tau, bdw, cov, bias)
+#' @usage rd.qte(y, x, d, x0, z0=NULL, tau, bdw, bias)
 #'
 #' @param y a numeric vector, the outcome variable.
-#' @param x a vector (or a matrix) of covariates, the first column is the running variable.
+#' @param x a vector (or a matrix) of covariates. When no covariates are included,
+#' \eqn{x} is simply a vector of the running variable. When covariates are present,
+#' \eqn{x} should be a matrix where the first column contains the running variable
+#' and the remaining columns contain the covariates.
 #' @param d a numeric vector, the treatment status.
 #' @param x0 the cutoff point.
 #' @param z0 the value of the covariates at which to evaluate the effects.
@@ -19,8 +21,6 @@
 #' The bandwidths for the rest of the quantiles are computed automatically using the formula of Yu and Jones (1998).
 #' If it is a vector with the same dimension as 'tau',
 #' the function will use these values for the respective quantiles accordingly.
-#' @param cov either 0 or 1. Set cov=1 when covariates are present in the model;
-#' otherwise set cov=0.
 #' @param bias either 0 or 1. If bias=1, the QTE estimate is bias corrected and
 #' the robust confidence band in Qu, Yoon, and Perron (2024) is produced.
 #' If bias=0, no bias correction is implemented.
@@ -44,12 +44,12 @@
 #'
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 #' Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"
-#' The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
+#' The Review of Economics and Statistics; \doi{10.1162/rest_a_01168}
 #' @references Zhongjun Qu and Jungmo Yoon (2019), "Uniform Inference on Quantile Effects
 #' under Sharp Regression Discontinuity Designs," Journal of Business and Economic Statistics,
-#' 37(4), 625–647; https://doi.org/10.1080/07350015.2017.1407323
+#' 37(4), 625–647; \doi{10.1080/07350015.2017.1407323}
 #' @references Keming Yu and M. C. Jones (1998), “Local Linear Quantile Regression,”
-#' Journal of the American Statistical Association, 93(441), 228–237; https://doi.org/10.2307/2669619
+#' Journal of the American Statistical Association, 93(441), 228–237; \doi{10.2307/2669619}
 #'
 #' @examples
 #' # Without covariate
@@ -58,31 +58,29 @@
 #' d <- (x > 0)
 #' y <- x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + rnorm(n)
 #' tlevel <- seq(0.1,0.9,by=0.1)
-#' \donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1)}
+#' \donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,bias=1)}
 #'
 #' # (continued) With covariates
 #' z <- sample(c(0,1),n,replace=TRUE)
 #' y <- x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + d*z + rnorm(n)
-#' \donttest{A <- rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,cov=1,bias=1)}
+#' \donttest{A <- rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,bias=1)}
 #'
-rd.qte <- function(y,x,d,x0,z0=NULL,tau,bdw,cov,bias){
+rd.qte <- function(y,x,d,x0,z0=NULL,tau,bdw,bias){
   x <- as.matrix(x)
   dz <- ncol(x)-1
+  cov <- if(dz == 0) 0 else 1
+  # remove missing observations
   mis <- apply(apply(cbind(y,x,d),2,is.na),1,max)
-  y <- y[mis==0]; x <- as.matrix(x[mis==0,]); d <- d[mis==0]	# drop missing observations
+  y <- y[mis==0]; x <- as.matrix(x[mis==0,]); d <- d[mis==0]
   n <- length(y)
-  if(cov==1 & dz==0){stop("The option 'cov' must be zero when there is no covariate.")}
-  if(cov==0 & dz >0){stop("The option 'cov' must be one to include covariates.")}
-  # quantile levels and bandwidths
-  if(length(bdw)==1) {bdw.opt <- 1}
-  if(length(bdw)>1 & length(bdw)==length(tau)) {bdw.opt <- 2}
+  bdw.opt <- if (length(bdw) == 1) 1 else if (length(bdw) == length(tau)) 2
   if(length(bdw)>1 & length(bdw)!=length(tau))
   {stop("The length of bdw should be one or equal to the length of tau.")}
   if(bdw.opt==1){
     tt <- sort(unique(c(tau,0.5)))
     hh <- bdw*((2*tt*(1-tt)/(pi*dnorm(qnorm(tt))^{2}))^{1/5})  # quantile specific bandwidths
+  } else{tt <- tau; hh <- bdw
   }
-  if(bdw.opt==2){tt <- tau; hh <- bdw}
   ab0 <- rdq(y,x,d,x0,z0,tau=tt,h.tau=hh,cov)
   Qp <- ab0$qp.est; Qm <- ab0$qm.est
   Qd <- ab0$qte

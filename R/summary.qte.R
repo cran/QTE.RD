@@ -4,8 +4,9 @@
 #' \code{summary.qte} returns uniform confidence bands and standard errors for QTE estimates.
 #'
 #' @param object It is an object of class "qte" produced by \code{rd.qte}.
-#' @param alpha a number between 0 and 1, the desired significance level. For example,
-#' when alpha=0.1, one will get a 90% uniform band.
+#' @param alpha a number between 0 and 1, the desired significance level.
+#' For example, setting `alpha = 0.1` yields a 90% uniform confidence band.
+#' Multiple significance levels can be specified, e.g., `alpha = c(0.1, 0.05)`.
 #' @param ... optional arguments.
 #'
 #' @return A list with elements:
@@ -29,10 +30,10 @@
 #'
 #' @references Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 #' Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"
-#' The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
+#' The Review of Economics and Statistics; \doi{10.1162/rest_a_01168}
 #' @references Zhongjun Qu and Jungmo Yoon (2019), "Uniform Inference on Quantile Effects
 #' under Sharp Regression Discontinuity Designs," Journal of Business and Economic Statistics,
-#' 37(4), 625–647; https://doi.org/10.1080/07350015.2017.1407323
+#' 37(4), 625–647; \doi{10.1080/07350015.2017.1407323}
 #'
 #' @examples
 #' # Without covariate
@@ -41,23 +42,24 @@
 #' d <- (x > 0)
 #' y <- x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + rnorm(n)
 #' tlevel = seq(0.1,0.9,by=0.1)
-#' \donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1)}
+#' \donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,bias=1)}
 #' \donttest{A2 <- summary(A,alpha=0.1)}
 #'
 #' # (continued) With covariates
 #' z <- sample(c(0,1),n,replace=TRUE)
 #' y <- x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + d*z + rnorm(n)
-#' \donttest{A <- rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,cov=1,bias=1)}
+#' \donttest{A <- rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,bias=1)}
 #' \donttest{A2 <- summary(A,alpha=0.1)}
 #'
-summary.qte <- function(object,alpha,...){
+#'
+summary.qte <- function(object,alpha=0.1,...){
   # obtains uniform confidence bands and standard errors
   if(length(alpha)==0){stop("Provide alpha to obtain confidence band.")}
   tau <- object$tau
   bdw <- object$bdw
   cov <- object$cov
   bias <- object$bias
-  ba  <- rdq.band(object$y,object$x,object$d,object$x0,object$z0,tau,bdw,cov,alpha)
+  ba  <- rdq.band(y=object$y,x=object$x,d=object$d,x0=object$x0,z0=object$z0,tau=tau,bdw=bdw,alpha=alpha)
   if(bias==0){out = list(uband = ba$uband, sigma = ba$sig, uband.p = ba$uband.p, uband.m = ba$uband.m)}
   if(bias==1){out = list(uband = ba$uband.robust, sigma = ba$sig.r, uband.p = ba$uband.robust.p, uband.m = ba$uband.robust.m)}
   out <- append(out, list(tau=tau, qte=object$qte, qp=object$qp.est, qm=object$qm.est, cov=cov, bias=bias, alpha=alpha), after=4)

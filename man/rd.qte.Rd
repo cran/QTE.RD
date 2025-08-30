@@ -4,12 +4,15 @@
 \alias{rd.qte}
 \title{QTE and its uniform confidence band.}
 \usage{
-rd.qte(y, x, d, x0, z0=NULL, tau, bdw, cov, bias)
+rd.qte(y, x, d, x0, z0=NULL, tau, bdw, bias)
 }
 \arguments{
 \item{y}{a numeric vector, the outcome variable.}
 
-\item{x}{a vector (or a matrix) of covariates, the first column is the running variable.}
+\item{x}{a vector (or a matrix) of covariates. When no covariates are included,
+\eqn{x} is simply a vector of the running variable. When covariates are present,
+\eqn{x} should be a matrix where the first column contains the running variable
+and the remaining columns contain the covariates.}
 
 \item{d}{a numeric vector, the treatment status.}
 
@@ -25,9 +28,6 @@ bandwidth for the median. See the function \code{rdq.bandwidth} for how to selec
 The bandwidths for the rest of the quantiles are computed automatically using the formula of Yu and Jones (1998).
 If it is a vector with the same dimension as 'tau',
 the function will use these values for the respective quantiles accordingly.}
-
-\item{cov}{either 0 or 1. Set cov=1 when covariates are present in the model;
-otherwise set cov=0.}
 
 \item{bias}{either 0 or 1. If bias=1, the QTE estimate is bias corrected and
 the robust confidence band in Qu, Yoon, and Perron (2024) is produced.
@@ -46,9 +46,8 @@ captures the effect of the bias correction. If \emph{bias=0}, no bias correction
 }
 }
 \description{
-\code{rd.qte} is the main function of the QTE.RD package. If \emph{cov=1}, it estimates QTE for each subgroup defined by covariates.
-If \emph{cov=0}, it estimate QTE without covariates. If \emph{bias=1}, it corrects the bias in QTE estimates and obtains the robust
-confidence band and if \emph{bias=0}, no bias correction is implemented.
+\code{rd.qte} is the main function of the QTE.RD package. It estimates QTE with/without covariates.
+If \emph{bias=1}, it corrects the bias in QTE estimates and obtains the robust confidence band and if \emph{bias=0}, no bias correction is implemented.
 }
 \examples{
 # Without covariate
@@ -57,23 +56,23 @@ x <- runif(n,min=-4,max=4)
 d <- (x > 0)
 y <- x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + rnorm(n)
 tlevel <- seq(0.1,0.9,by=0.1)
-\donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,cov=0,bias=1)}
+\donttest{A <- rd.qte(y=y,x=x,d=d,x0=0,z0=NULL,tau=tlevel,bdw=2,bias=1)}
 
 # (continued) With covariates
 z <- sample(c(0,1),n,replace=TRUE)
 y <- x + 0.3*(x^2) - 0.1*(x^3) + 1.5*d + d*z + rnorm(n)
-\donttest{A <- rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,cov=1,bias=1)}
+\donttest{A <- rd.qte(y=y,x=cbind(x,z),d=d,x0=0,z0=c(0,1),tau=tlevel,bdw=2,bias=1)}
 
 }
 \references{
 Zhongjun Qu, Jungmo Yoon, Pierre Perron (2024), "Inference on Conditional Quantile
 Processes in Partially Linear Models with Applications to the Impact of Unemployment Benefits,"
-The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
+The Review of Economics and Statistics; \doi{10.1162/rest_a_01168}
 
 Zhongjun Qu and Jungmo Yoon (2019), "Uniform Inference on Quantile Effects
 under Sharp Regression Discontinuity Designs," Journal of Business and Economic Statistics,
-37(4), 625–647; https://doi.org/10.1080/07350015.2017.1407323
+37(4), 625–647; \doi{10.1080/07350015.2017.1407323}
 
 Keming Yu and M. C. Jones (1998), “Local Linear Quantile Regression,”
-Journal of the American Statistical Association, 93(441), 228–237; https://doi.org/10.2307/2669619
+Journal of the American Statistical Association, 93(441), 228–237; \doi{10.2307/2669619}
 }

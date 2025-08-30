@@ -2,8 +2,8 @@
 #'
 #' @param x object returned from \code{rd.qte}.
 #' @param ... optional arguments.
-#'
 #' @export
+#' @keywords internal
 #'
 print.qte <- function(x,...){
   cov <- x$cov

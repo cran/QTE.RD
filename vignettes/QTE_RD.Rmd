@@ -1,0 +1,268 @@
+---
+title: "QTE in RDD"
+output: rmarkdown::html_vignette
+bibliography: qte_rdd.bib
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{QTE in RDD}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<style type="text/css">
+  body{
+  font-size: 14pt;
+}
+</style>
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include = FALSE}
+library(QTE.RD)
+require(quantreg)
+```
+
+## Introduction
+
+The **QTE.RD** package provides tools to test, estimate, and conduct uniform inference on quantile treatment effects (QTEs) in sharp regression discontinuity (RD) designs. These methods are particularly useful for detecting and analyzing heterogeneous treatment effects. 
+
+Instead of focusing solely on average effects, users can assess a policy’s impact across the entire distribution of an outcome variable. When significant heterogeneity is identified by examining the distributional effects for the full sample, the package can help pinpoint the source of the heterogeneity by allowing for covariate-specific effects in the RD design.
+
+The statistical theory underlying these methods was developed by @Qu_Yoon_2019 and @Qu_Yoon_Perron_2024, who introduced uniform inference procedures and robust bias correction for QTE in RD designs. **QTE.RD** implements these methods in a user-friendly interface.
+
+<br>
+
+## Scope of this Vignette
+
+This vignette serves as a practical guide for users with some familiarity with quantile regression and RD designs. For those seeking a more detailed introduction to the methodology and its applications, we refer to @Qu_Yoon_2025, which discusses both the theoretical foundations and the practical use of **QTE.RD** in detail.
+
+<br>
+
+## Getting Started
+
+**QTE.RD** can be installed from CRAN via
+
+```{r eval = FALSE}
+install.packages("QTE.RD")
+```
+
+The package depends on **quantreg** for quantile regression. If it is not already installed, install it with: `install.packages("quantreg")`.
+
+<br>
+
+## Overview of the package
+
+After installing the **QTE.RD** package, it can be loaded by
+
+```{r}
+library(QTE.RD)
+```
+
+The package provides four main functions:
+
+1. `rd.qte()` - Estimates QTEs over a range of quantiles using local-linear regressions and constructs uniform confidence bands. Users can include covariates and apply either no bias correction or robust bias correction [@Qu_Yoon_Perron_2024].
+
+2. `rdq.test()` - Tests three hypotheses on treatment effects: Treatment Significance, Homogeneity, and Unambiguity. It supports covariates and robust bias correction, with critical values obtained via simulation.
+
+3. `rdq.bandwidth()` - Selects bandwidths using either cross-validation or MSE-optimal rules. Both can be applied to check robustness.
+
+4. `plot.qte()` - Produces figures of QTE estimates and uniform confidence bands to visualize estimation and testing results.
+
+<br>
+
+# Illustration by Example
+
+For illustration, we apply these functions to study the effect of tracking (assigning students into separate classes based on prior achievement) on student performance. We use a subset of the dataset from @Duflo_Dupas_Kremer_2011, which is included in the package and can be loaded with:
+
+```{r}
+data("ddk_2011")
+```
+
+## Data and Background 
+
+The data `ddk_2011` comes from an experiment in 121 Kenyan primary schools that received funds in 2005 to hire an extra teacher and split their single first-grade class into two sections. Schools were randomly assigned to treatment group, 61 tracking schools, or control group, 60 non-tracking schools. In tracking schools, students were assigned to upper or lower section based on baseline test scores. In non-tracking schools, students were randomly assigned. 
+
+The experimental design has rich random variations, featuring elements of both randomized controlled trials (RCT) and RD. By comparing tracking and non-tracking schools, that is, by exploiting the RCT structure, one can study the effect of tracking on all students. Additionally, by analyzing median students within tracking schools, that is, by exploiting the RD structure, one can study the effect of tracking on marginal students who barely made or missed the opportunity of being assigned to a high ability section. 
+
+This vignette will focus on the RD-based evidence, which provides insight into how tracking affects students at the margin. Readers interested in the RCT-based evidence can find a more detailed analysis in @Qu_Yoon_2025.
+
+The experiment lasted 18 months. The outcome is the sum of math and language scores on endline tests, and the running variable for RD is student’s percentile rank from the baseline test. To explore heterogeneity in treatment effects, we include baseline test scores, gender, age at the endline test, and teacher status (civil servant vs. contract) as covariates.
+
+<br>
+
+## Variables
+
+Define some key variables:
+
+```{r}
+trk <- ddk_2011$tracking
+con <- ddk_2011$etpteacher
+hgh <- ddk_2011$highstream
+yy  <- ddk_2011$ts_std
+xx  <- ddk_2011$percentile
+```
+
+There are three indicator variables; `trk` takes 1 for tracking schools (and 0 for non-tracking schools), `con` takes 1 for students assigned to a contract teacher, `hgh` takes 1 for students assigned to high-achieving sections (if in tracking schools). The variable `yy` is the endline test scores normalized by the mean and standard deviation of non-tracking schools and `xx` is student's percentile rank from the baseline test. Because the outcome variable is normalized, the unit of the effect is a standard deviation of the endline test score (of non-tracking schools). 
+
+<br>
+
+## RDD
+
+We focus on tracking schools to evaluate the effects of tracking using the RD design. Specifically, we examine students near the median of the baseline test score, comparing those who just qualified for the upper section to those who narrowly missed it. The outcome and running variables (`yc` and `xc` below) include only students from tracking schools. The cutoff is the median of the baseline percentile (`x0 = 50`), and the treatment indicator (`dc` below) equals 1 for students placed in the high-achieving section.
+
+```{r}
+yc <- yy[trk==1]
+xc <- xx[trk==1]
+dc <- hgh[trk==1]
+x0 <- 50
+tlevel <- 1:9/10
+hh <- 20
+```
+
+The last two lines set the values of two parameters; `tlevel` defines the range of quantile index to be [0.1,0.9] and `hh` is the bandwidth at the median of the outcome distribution.
+
+<br>
+
+## QTE from RDD without covariates
+
+In `rd.qte()`, when `x` includes the running variable only and `z0` is unspecified, one can estimate quantile effects at `x0` without covariate. 
+
+```{r}
+A <- rd.qte(y=yc,x=xc,d=dc,x0,z0=NULL,tau=tlevel,bdw=hh,bias=1)
+A2 <- summary(A,alpha=0.1)
+A2
+```
+
+The outcome table shows some essential elements of the analysis including point estimates of QTE, standard errors, and uniform confidence bands. Because the bias option is activated, `bias=1`, the table reports the bias corrected point estimate and the robust standard error and robust uniform band. If `bias=0`, one would obtain QTE estimates and uniform bands without the bias correction. In the second line, `alpha=0.1`, so a 90% uniform confidence band is reported. If `alpha=0.05`, one would get a 95% uniform confidence band. 
+
+The estimated quantile effects are small in magnitude (the maximum effect is -0.157 standard deviation when $\tau=0.5$) and the uniform confidence band includes zero throughout the quantile range. This confirms a finding in @Duflo_Dupas_Kremer_2011 who concluded that ``the median student in tracking schools scores similarly whether assigned to the upper or lower section.'' The QTE estimate provides even stronger evidence that not only on average but also on the entire endline score distribution, students near the median of the initial test scores fare similarly regardless of whether they were assigned to the upper or lower ability section. 
+
+To examine the shape of the effect graphically, `plot.qte()` function can be used to produce QTE plots along with uniform confidence bands.
+
+```{r, fig.width=8.5, fig.height=5.5, out.width="95%"}
+y.text <- "test scores"
+m.text <- "Effects of assignment to lower vs. upper sections"
+plot(A2,ytext=y.text,mtext=m.text)
+```
+
+<br>
+
+It is of interest to examine the conditional quantile functions from two sides of the cutoff. The function `plot.qte()` can make such plots with the option `ptype=2`. The inputs for conditional quantile plots include estimates for two conditional quantile functions, `qp` and `qm`, and their uniform bands, `bandp` and `bandm`. These outputs are produced by `summary.qte()` and already saved in `A2`, as the next example shows. 
+
+```{r, fig.width=8.5, fig.height=6, out.width="95%"}
+y.text <- "test scores"
+m.text <- "Conditional quantile functions"
+sub.text <- c("Upper section","Lower section")
+plot(A2,ptype=2,ytext=y.text,mtext=m.text,subtext=sub.text)
+```
+
+<br>
+
+To test the (lack of) effect, one can use the `rdq.test()` function. When `alpha=c(0.1,0.05)`, it provides critical values at the 10\% and 5\% levels. The `type` option determines the type of tests to be conducted. To test the treatment significance, set `type=1` and to test the treatment homogeneity hypothesis, change it to `type=2`. For the unambiguity hypothesis with the effects unambiguously positive (or negative) under the null hypothesis, set `type=3` (or `type=4`). These options can be combined: the lines below set `type=c(1,2,3,4)`, leading to tests for all four hypotheses.
+
+```{r}
+B <- rdq.test(y=yc,x=xc,d=dc,x0,z0=NULL,tau=tlevel,bdw=hh,bias=1,
+              alpha=c(0.1,0.05),type=c(1,2,3,4),std.opt=1)
+B
+```
+
+When `std.opt=1`, the test statistic is standardized by the pointwise standard deviations of the limiting process. As a result, the quantiles that are estimated imprecisely receive less weight in the construction. When `std.opt=0`, the tests are not standardized. The default is `std.opt=1`.
+
+The outcome table displays the null hypotheses to be tested, test statistics, critical values, and p-values. All four tests indicate that QTEs are likely to be zero over the entire quantile range.
+
+The empirical evidence from the RDD indicates that there is no difference in endline achievement between marginal students regardless of whether they were assigned to the upper or lower section. Because students in the upper section had much higher achieving peers, this implies that there may be a factor that offsets the positive peer effect. One possibility is that tracking may allow teachers to adjust their instruction to students' needs. @Duflo_Dupas_Kremer_2011 explored this potential channel and documented evidence that teachers had incentives to focus on the students at the top of the distribution. 
+<br>
+
+The bandwidth (at the median) can be estimated as follows. 
+
+```{r}
+C <- rdq.bandwidth(y=yc,x=xc,d=dc,x0,z0=NULL,cv=1,val=(5:20),pm.each=0)
+C
+```
+
+
+The cross-validation option is enabled by `cv=1`, so the table reports both CV and MSE optimal bandwidths. The candidate bandwidth values for cross-validation are set to $\{5,6,\ldots,20\}$ by `val=(5:20)`. In this example, bandwidth 20 (at the median) was selected by the cross-validation method and used accordingly.
+
+For very large samples, computing the CV bandwidth may take a long time. In such a case, set `cv=0` and use the MSE optimal bandwidth at least for the initial stage of data exploration. The function `rdq.bandwidth()` offers flexibility by allowing users to adjust several option arguments; see @Qu_Yoon_2025 for more details. 
+
+<br>
+
+## QTE from RDD with covariates
+
+To see heterogeneity in the effect of tracking, one can include additional covariates. This section compares effects of tracking for boys and girls. The covariate `zc` is a female dummy and the evaluation point $z_0$ is set by `z.eval = c(0,1)`. The order of display in the outcome table is the same as the order of the group in $z_0$. 
+
+```{r}
+zc <- ddk_2011$girl[trk==1]
+z.eval <- c(0,1)
+A <- rd.qte(y=yc,x=cbind(xc,zc),d=dc,x0,z0=z.eval,tau=tlevel,bdw=hh,
+            bias=1)
+A2 <- summary(A,alpha=0.1)
+A2
+```
+
+Because `z.eval <- c(0,1)` and $z_0 = 0$ means boys, the outcome table shows results for boys first (shown as Group-1) and girls later (Group-2). For boys, the quantile effects of being in the upper ability section is positive but insignificant. For girls, the effects are mostly negative and insignificant. But at the bottom of the outcome distribution, when $\tau = 0.1$, the negative effect turns to be significant. 
+
+To see the group-wise difference graphically, one can draw QTE plots as follows. 
+
+```{r, fig.width=9, fig.height=5.8, out.width="100%"}
+y.text <- "test scores"
+m.text <- c("Boys","Girls")
+plot(A2,ytext=y.text,mtext=m.text)
+```
+
+The plot clearly shows that tracking has positive but insignificant effect for marginal male students, but the effect is negative for marginal female students and significantly so at the left tail. To explore further, it will be useful to draw plots for the conditional quantile functions (by setting `ptype=2`) separately for each group.
+
+```{r, fig.width=9, fig.height=5.8, out.width="100%"}
+y.text <- "test scores"
+m.text <- c("Boys","Girls")
+sub.text <- c("Upper section","Lower section")
+plot(A2,ptype=2,ytext=y.text,mtext=m.text,subtext=sub.text)
+```
+
+The plot shows that for girls, the conditional quantile function of endline test scores for the upper section is consistently below that of the lower section, and the difference is largest at the left tail. 
+
+Tests for hypotheses for each group can be done as well. 
+
+```{r}
+B <- rdq.test(y=yc,x=cbind(xc,zc),d=dc,x0,z0=z.eval,tau=tlevel,bdw=hh,
+              bias=1,alpha=c(0.1,0.05),type=c(1,2,3,4))
+B
+```
+
+The results indicate that it is not possible to reject hypotheses that the QTE is consistently zero for boys, but there is evidence that the effects can be negative for girls. For female students the null hypothesis of no effect (significance) and positive uniform effect (dominance) are rejected at the 5\% confidence level. 
+
+The bandwidth can be selected as well. 
+
+```{r}
+C <- rdq.bandwidth(y=yc,x=cbind(xc,zc),d=dc,x0,z0=z.eval,cv=1,
+                   val=(5:20),pm.each=0)
+C
+```
+
+When users would like to see the effect of the bias correction on point estimates and uniform bands, it will be convenient to use the function `rdq.band()`. Its options are the same as those in `rd.qte()`. The difference is that it implements estimation with and without bias correction and present results side by side. 
+
+```{r}
+D <- rdq.band(y=yc,x=cbind(xc,zc),d=dc,x0,z0=z.eval,tau=tlevel,
+              bdw=hh,alpha=0.1)
+D
+```
+
+Without bias correction, the effect for girls at the 10-th percentile is no longer statistically significant, as the estimate is smaller. Otherwise, the conclusion does not change.
+
+<br>
+
+# Concluding Remarks
+
+In this vignette, we illustrated the **QTE.RD** package using a binary covariate in the RD setup.
+The scope of the analysis can be broadened, and the exploration of heterogeneity becomes more interesting when incorporating a continuous covariate or a combination of both discrete and continuous covariates. Further details can be found in @Qu_Yoon_2025. Readers interested in RCT-based evidence on tracking may also refer to the more detailed analysis in @Qu_Yoon_2025.
+
+
+<br>
+
+# References
+

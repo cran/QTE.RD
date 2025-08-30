@@ -81,8 +81,9 @@ fm = rdq.condf(x=x,Q=ab$qm.est,bcoe=ab$bcoe.m,taus=tlevel,taul=tlevel2,delta,cov
 bp = rdq.bias(y[d==1],x[d==1],dz=0,x0=0,z0=NULL,taus=tlevel,hh,hh,fx=fp$ff[(d==1),],cov=0)
 bm = rdq.bias(y[d==0],x[d==0],dz=0,x0=0,z0=NULL,taus=tlevel,hh,hh,fx=fm$ff[(d==0),],cov=0)
 
-sa = rdq.sim(x=x,d=d,x0=0,z0=NULL,dz=0,cov=0,tt=tlevel,hh,hh,fxp=fp$ff,fxm=fm$ff,n.sim=200)
-bt <- run.test(n,dz=0,taus=tlevel,hh,Dc.p=sa$dcp,Dc.m=sa$dcm,Dr.p=sa$drp,Dr.m=sa$drm,
+sa <- QTE.RD:::rdq.sim(x=x,d=d,x0=0,z0=NULL,dz=0,cov=0,tt=tlevel,hh,hh,
+fxp=fp$ff,fxm=fm$ff,n.sim=200)
+bt <- QTE.RD:::run.test(n,dz=0,taus=tlevel,hh,Dc.p=sa$dcp,Dc.m=sa$dcm,Dr.p=sa$drp,Dr.m=sa$drm,
 Qy.p=as.matrix(ab$qp.est[sel,]),Qy.m=as.matrix(ab$qm.est[sel,]),bias.p=bp$bias,bias.m=bm$bias,
 cov=0,bias=1,alpha=0.1,n.sim=200,test.type=1,std.opt=1)
 
@@ -95,3 +96,4 @@ The Review of Economics and Statistics; https://doi.org/10.1162/rest_a_01168
 \seealso{
 \link{rdq.test}
 }
+\keyword{internal}

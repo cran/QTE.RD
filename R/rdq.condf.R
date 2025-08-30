@@ -9,8 +9,8 @@
 #' @param taul a vector of quantiles used for the conditional density estimation.
 #' It is needed to estimate the tail parts of conditional density functions more precisely.
 #' @param delta bandwidths for estimating the conditional density.
-#' @param cov either 0 or 1. Set \emph{cov=1} if covariates are present in the model;
-#' otherwise set \emph{cov=0}.
+#' @param cov either 0 or 1. Set `cov=1` if covariates are present in the model;
+#' otherwise set `cov=0`.
 #'
 #' @return conditional density function estimates
 #' @export

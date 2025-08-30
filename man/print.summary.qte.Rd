@@ -14,3 +14,4 @@
 \description{
 Print a summary.qte object
 }
+\keyword{internal}

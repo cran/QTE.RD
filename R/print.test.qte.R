@@ -4,6 +4,7 @@
 #' @param x object returned from \code{test.qte}.
 #' @param ... optional arguments.
 #' @export
+#' @keywords internal
 #'
 print.test.qte <- function(x,...){
   te.st <- x$statistic
